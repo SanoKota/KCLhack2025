@@ -1,5 +1,6 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QPushButton
+from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QPushButton, QVBoxLayout, QHBoxLayout
+from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 import form  # Uncomment and use this if you have a form.py file in the same directory
 from login import LoginWindow  # Uncomment and use this if you have a login.py file in the same directory
@@ -16,42 +17,38 @@ class SecondWindow(QWidget):
 class VariableWindows(QWidget):
     def __init__(self):
         super().__init__()
-        self.label = QLabel("中央の文字", self)
-        self.setWindowTitle("メインウィンドウ")
-        self.resize(400, 300)
-        self.second_window = None
+
     def frame(self):
         self.setWindowTitle("aaa")
-        self.resize(400, 300)
-        self.button()
-    
-    def resizeEvent(self, event):
-        win_width = self.width()
-        win_height = self.height()
+        self.label = QLabel("中央の文字", self)
+        self.label.setFont(QFont("Arial", 18, QFont.Bold))
+        self.label.setAlignment(Qt.AlignCenter)
+        self.label.setStyleSheet("color: #1a73e8; margin: 20px;")
 
-        # ラベルのサイズ
-        label_width = self.label.width()
-        label_height = self.label.height()
-
-        # 配置する割合（ここでは中央＝0.5, 0.5）
-        x_ratio = 0.5
-        y_ratio = 0.5
-
-        # 新しい位置を計算（中心を合わせる）
-        x = int(win_width * x_ratio - label_width / 2)
-        y = int(win_height * y_ratio - label_height / 2)
-
-        self.label.move(x, y)
-        
-    def button(self):
         self.login = QPushButton("ログイン", self)
         self.login.setStyleSheet("background-color:red")
-        self.login.move(50, 220)  # ボタンの位置を指定
         self.btn = QPushButton("新規登録", self)
         self.btn.setStyleSheet("background-color:red")
-        self.btn.move(150, 220)  # ボタンの位置を指定
         self.btn.clicked.connect(self.on_button_click)
         self.login.clicked.connect(self.open_login_window)
+
+        # ボタンを横並びで中央に
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch(1)
+        btn_layout.addWidget(self.login)
+        btn_layout.addSpacing(40)
+        btn_layout.addWidget(self.btn)
+        btn_layout.addStretch(1)
+
+        # 全体を縦並びで中央に
+        layout = QVBoxLayout()
+        layout.addStretch(2)
+        layout.addWidget(self.label)
+        layout.addStretch(1)
+        layout.addLayout(btn_layout)
+        layout.addStretch(3)
+        self.setLayout(layout)
+        self.showMaximized()
 
     def open_login_window(self):
         self.login_window = LoginWindow()
