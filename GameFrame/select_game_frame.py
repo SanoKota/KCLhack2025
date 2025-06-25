@@ -2,6 +2,7 @@ import sys
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QPushButton, QVBoxLayout, QGridLayout, QSizePolicy
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
+import game_page as gp
 
 class RangeSelectFrame(QWidget):
     def __init__(self):
@@ -137,6 +138,42 @@ class SelectGameFrame(QWidget):
         selected_grade = sender.text()
         # ここで選択された範囲と学年に応じた処理を実装
         print(f"範囲: {self.selected_range}, 学年: {selected_grade}")
+        #ここから問題のページに移行する
+        ranges = {
+            "三角関数":"TrigonometricFunctions",
+            "指数・対数関数":"LogarithmicFunctions",
+            "微分":"Differential",
+            "積分":"Integral",
+            "ベクトル":"Vector",
+            "数列":"NumberSequence",
+            "確率・統計":"ProbabilityStatistics",
+            "微分方程式":"DifferentialEquation",
+            "行列(固有値・固有ベクトル)":"Matrix",
+            "複素数":"ComplexNumber",
+            "その他":"Others",
+        }
+        for i, name in enumerate(ranges):
+            if self.selected_range == i:
+                n = SelectGameFrame.select_grade(self, selected_grade)
+                Q = "gp.GamePage()"
+                Page = Q + "." + {name} + "()"
+        self.hide()
+
+    def select_grade(self, grade):
+        grade = grade
+        high_univercity = {
+            "高校1年の問題":"h1",
+            "高校2年の問題":"h2",
+            "高校3年の問題":"h3",
+            "大学1年の問題":"u1",
+            "大学2年の問題":"u2",
+            "大学3年の問題":"u3",
+            "大学4年の問題":"u4"
+        }
+        for q, n in enumerate(high_univercity):
+            if grade == q:
+                return n
+                
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
