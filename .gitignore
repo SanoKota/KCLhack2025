@@ -8,3 +8,6 @@ Login/UserData/
 # vscode settings
 .vscode/
 .vs/
+
+# GameData
+GameFrame/GameData/
