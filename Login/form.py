@@ -518,19 +518,20 @@ class FormWidget(QWidget):
         self.name_input.setFocus()  # 名前欄にフォーカスを設定
 
     def get_next_user_id(self):
-        """users.csvから次の8桁連番IDを取得"""
+        """users.csvから最大の8桁IDを取得し、+1した値を返す"""
         import csv, os
-        user_file = "users.csv"
+        user_file = "./UserData/users.csv"
         max_id = 0
         if os.path.exists(user_file):
             with open(user_file, 'r', encoding='utf-8-sig') as f:
                 reader = csv.DictReader(f)
                 for row in reader:
                     try:
-                        id_num = int(row.get('ID', '0'))
+                        id_str = row.get('ID', '0')
+                        id_num = int(id_str)
                         if id_num > max_id:
                             max_id = id_num
-                    except:
+                    except Exception:
                         pass
         return f"{max_id+1:08d}"
 

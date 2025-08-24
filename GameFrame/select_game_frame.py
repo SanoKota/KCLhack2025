@@ -2,7 +2,7 @@ import sys
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QPushButton, QVBoxLayout, QGridLayout, QSizePolicy
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
-import game_page as gp
+#import game_page as gp
 
 class RangeSelectFrame(QWidget):
     def __init__(self):
@@ -157,6 +157,7 @@ class SelectGameFrame(QWidget):
                 n = SelectGameFrame.select_grade(self, selected_grade)
                 Q = "gp.GamePage()"
                 Page = Q + "." + {name} + "()"
+                print(Page)
         self.hide()
 
     def select_grade(self, grade):

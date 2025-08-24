@@ -9,7 +9,7 @@ class GamePage(QWidget):
         super().__init__()
         
     def TrigonometricFunctions(self):
-        pass
+        print("Trigonometric Functions selected")
 
     def LogarithmicFunctions(self):
         pass
