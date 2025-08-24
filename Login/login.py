@@ -39,7 +39,7 @@ class LoginWindow(QWidget):
             QMessageBox.warning(self, "エラー", "ユーザー名とパスワードを入力してください。")
             return
         # CSVファイルからユーザー情報を参照
-        csv_path = "./UserData/users.csv"  # ユーザー情報CSVファイル名
+        csv_path = "./Login/UserData/users.csv"  # ユーザー情報CSVファイル名
         if not os.path.exists(csv_path):
             QMessageBox.critical(self, "エラー", f"ユーザー情報ファイルが見つかりません: {csv_path}")
             return

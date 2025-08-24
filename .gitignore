@@ -1,2 +1,5 @@
 #user data
 Login/UserData/
+
+#Ignore __pycache__ directories
+**/__pycache__/

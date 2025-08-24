@@ -8,36 +8,8 @@ class GamePage(QWidget):
     def __init__(self):
         super().__init__()
         
-    def TrigonometricFunctions(self):
-        print("Trigonometric Functions selected")
-
-    def LogarithmicFunctions(self):
-        pass
-
     def Differential(self):
-        pass
+        print("Differential method called")
     
     def Integral(self):
-        pass
-
-    def Vector(self):
-        pass
-
-    def NumberSequence(self):
-        pass
-
-    def ProbabilityStatistics(self):
-        pass
-
-    def DifferentialEquation(self):
-        pass
-
-    def Matrix(self):
-        pass
-
-    def ComplexNumber(self):
-        pass
-
-    def Others(self):
-        pass
-
+        print("Integral method called")

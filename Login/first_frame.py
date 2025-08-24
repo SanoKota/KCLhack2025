@@ -20,7 +20,7 @@ class VariableWindows(QWidget):
 
     def frame(self):
         self.setWindowTitle("aaa")
-        self.label = QLabel("中央の文字", self)
+        self.label = QLabel("微分積分マスター", self)
         self.label.setFont(QFont("Arial", 18, QFont.Bold))
         self.label.setAlignment(Qt.AlignCenter)
         self.label.setStyleSheet("color: #1a73e8; margin: 20px;")
