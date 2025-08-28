@@ -50,10 +50,9 @@ class RangeSelectFrame(QWidget):
         }
         if selected_range in ranges:
             class_name = ranges[selected_range]
-            game_page = GamePage()
-            getattr(game_page, class_name)()  # 該当メソッドを呼び出す
-            game_page.show()
-        self.hide()
+            self.game_page = GamePage()  # インスタンスを保持
+            getattr(self.game_page, class_name)()  # 該当メソッドを呼び出す
+        # self.hide()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

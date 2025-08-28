@@ -2,8 +2,8 @@ import sys
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QPushButton, QVBoxLayout, QHBoxLayout
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
-import form  # Uncomment and use this if you have a form.py file in the same directory
-from login import LoginWindow  # Uncomment and use this if you have a login.py file in the same directory
+from Login import form  # ← こちらに修正
+from Login.login import LoginWindow
 
 class SecondWindow(QWidget):
     def __init__(self):
