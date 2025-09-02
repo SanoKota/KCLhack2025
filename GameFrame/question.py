@@ -6,13 +6,38 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
+from Result.result import AnswerWindow
+import matplotlib.pyplot as plt
+import tempfile
+from PyQt5.QtGui import QPixmap
+
+def latex_to_pixmap(latex_str):
+    # latex_strが$で囲まれていなければ自動で囲む
+    if not (latex_str.startswith("$") and latex_str.endswith("$")):
+        latex_str = f"${latex_str}$"
+    fig = plt.figure(figsize=(2, 0.7))
+    fig.text(0.5, 0.5, latex_str, fontsize=24, ha='center', va='center')
+    fig.patch.set_alpha(0)
+    plt.axis('off')
+    fig.canvas.draw()
+    with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmpfile:
+        fig.savefig(tmpfile.name, bbox_inches='tight', pad_inches=0.2, transparent=True)
+        plt.close(fig)
+        pixmap = QPixmap(tmpfile.name)
+    return pixmap
 
 class DifferentialGame(QWidget):
-    def __init__(self):
+    def __init__(self, mode="微分"):
         super().__init__()
-        self.setWindowTitle("微分問題")
+        self.mode = mode  # "微分" or "積分"
+        self.setWindowTitle(f"{self.mode}問題")
         self.setFont(QFont("Arial", 14))
-        self.data = self.load_csv("GameFrame/GameData/differentioal.csv")
+        # modeに応じてCSVファイルを切り替え
+        if self.mode == "微分":
+            csv_path = "GameFrame/GameData/differentioal.csv"
+        else:
+            csv_path = "GameFrame/GameData/integral.csv"
+        self.data = self.load_csv(csv_path)
         self.current = 0
         self.init_ui()
 
@@ -25,9 +50,15 @@ class DifferentialGame(QWidget):
         # 問題欄（左半分の中心）
         left_layout = QVBoxLayout()
         left_layout.addStretch(1)
-        self.question_label = QLabel(self.data[self.current]["Question"], self)
-        self.question_label.setFont(QFont("Arial", 18, QFont.Bold))
+        # LaTeX数式を画像化して表示
+        self.question_label = QLabel(self)
         self.question_label.setAlignment(Qt.AlignCenter)
+        question_text = self.data[self.current]["Question"]
+        if question_text.startswith("$") and question_text.endswith("$"):
+            self.question_label.setPixmap(latex_to_pixmap(question_text))
+        else:
+            self.question_label.setText(question_text)
+            self.question_label.setFont(QFont("Arial", 18, QFont.Bold))
         left_layout.addWidget(self.question_label)
         left_layout.addStretch(1)
 
@@ -87,7 +118,14 @@ class DifferentialGame(QWidget):
     def show_next(self, next_index):
         if next_index < len(self.data):
             self.current = next_index
-            self.question_label.setText(self.data[self.current]["Question"])
+            question_text = self.data[self.current]["Question"]
+            if question_text.startswith("$") and question_text.endswith("$"):
+                self.question_label.setPixmap(latex_to_pixmap(question_text))
+                self.question_label.setText("")  # 画像表示時はテキストをクリア
+            else:
+                self.question_label.setPixmap(QPixmap())  # 画像をクリア
+                self.question_label.setText(question_text)
+                self.question_label.setFont(QFont("Arial", 18, QFont.Bold))
             self.hint1_label.setText("")
             self.hint2_label.setText("")
             self.hint1_btn.setEnabled(True)
@@ -97,41 +135,3 @@ class DifferentialGame(QWidget):
         else:
             QMessageBox.information(self, "終了", "全ての問題が終了しました")
             self.close()
-
-class AnswerWindow(QWidget):
-    def __init__(self, answer, explanation, current, total, parent_game):
-        super().__init__()
-        self.setWindowTitle("回答")
-        self.parent_game = parent_game
-        self.next_index = current + 1
-
-        layout = QVBoxLayout()
-        answer_label = QLabel(f"答え: {answer}", self)
-        answer_label.setFont(QFont("Arial", 32, QFont.Bold))
-        answer_label.setAlignment(Qt.AlignCenter)
-        explanation_label = QLabel(explanation, self)
-        explanation_label.setFont(QFont("Arial", 18))
-        explanation_label.setAlignment(Qt.AlignCenter)
-        layout.addStretch(1)
-        layout.addWidget(answer_label)
-        layout.addWidget(explanation_label)
-        layout.addStretch(1)
-
-        btn_layout = QHBoxLayout()
-        self.next_btn = QPushButton("次の問題へ", self)
-        self.next_btn.setFont(QFont("Arial", 16))
-        self.next_btn.clicked.connect(self.next_question)
-        self.exit_btn = QPushButton("終了する", self)
-        self.exit_btn.setFont(QFont("Arial", 16))
-        self.exit_btn.clicked.connect(self.close)
-        btn_layout.addWidget(self.next_btn)
-        btn_layout.addWidget(self.exit_btn)
-        layout.addLayout(btn_layout)
-
-        self.setLayout(layout)
-        self.showMaximized()
-
-    def next_question(self):
-        self.close()
-        self.parent_game.show_next(self.next_index)
-
