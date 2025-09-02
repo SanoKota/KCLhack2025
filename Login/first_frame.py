@@ -1,6 +1,6 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QPushButton, QVBoxLayout, QHBoxLayout
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QPainter, QPixmap
 from PyQt5.QtCore import Qt
 from Login import form  # ← こちらに修正
 from Login.login import LoginWindow
@@ -17,22 +17,26 @@ class SecondWindow(QWidget):
 class VariableWindows(QWidget):
     def __init__(self):
         super().__init__()
+        self.background = QPixmap("Login/LoginPage.png")  # 画像パスを指定
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.drawPixmap(self.rect(), self.background)
 
     def frame(self):
         self.setWindowTitle("aaa")
         self.label = QLabel("微分積分マスター", self)
         self.label.setFont(QFont("Arial", 18, QFont.Bold))
         self.label.setAlignment(Qt.AlignCenter)
-        self.label.setStyleSheet("color: #1a73e8; margin: 20px;")
+        self.label.setStyleSheet("color: #1a73e8; margin: 20px; background: transparent;")
 
         self.login = QPushButton("ログイン", self)
-        self.login.setStyleSheet("background-color:red")
+        # ボタンの色は変更しない
         self.btn = QPushButton("新規登録", self)
-        self.btn.setStyleSheet("background-color:red")
+        # ボタンの色は変更しない
         self.btn.clicked.connect(self.on_button_click)
         self.login.clicked.connect(self.open_login_window)
 
-        # ボタンを横並びで中央に
         btn_layout = QHBoxLayout()
         btn_layout.addStretch(1)
         btn_layout.addWidget(self.login)
@@ -40,7 +44,6 @@ class VariableWindows(QWidget):
         btn_layout.addWidget(self.btn)
         btn_layout.addStretch(1)
 
-        # 全体を縦並びで中央に
         layout = QVBoxLayout()
         layout.addStretch(2)
         layout.addWidget(self.label)
