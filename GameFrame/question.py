@@ -2,14 +2,15 @@ import sys
 import csv
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QLabel, QLineEdit, QPushButton,
-    QVBoxLayout, QHBoxLayout, QGridLayout, QMessageBox
+    QVBoxLayout, QHBoxLayout, QGridLayout, QMessageBox, QButtonGroup
 )
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtCore import Qt
 from Result.result import AnswerWindow
 import matplotlib.pyplot as plt
 import tempfile
 from PyQt5.QtGui import QPixmap
+import random
 
 def latex_to_pixmap(latex_str):
     fig = plt.figure(figsize=(2, 0.7))
@@ -73,11 +74,28 @@ class DifferentialGame(QWidget):
         self.hint2_label.setFont(QFont("Arial", 12))
         self.hint2_btn.clicked.connect(self.show_hint2)
 
-        # 回答欄（右下）
-        self.answer_edit = QLineEdit(self)
-        self.answer_edit.setPlaceholderText("回答を入力")
-        self.submit_btn = QPushButton("回答", self)
-        self.submit_btn.clicked.connect(self.check_answer)
+        # 回答欄（右下）を3択ボタン（数式画像）に変更
+        self.choices = [
+            self.data[self.current]["select1"].strip(),
+            self.data[self.current]["select2"].strip(),
+            self.data[self.current]["Answer"].strip()
+        ]
+        random.shuffle(self.choices)
+
+        self.answer_group = QButtonGroup(self)
+        self.answer_buttons = []
+        answer_layout = QHBoxLayout()
+        for i, ans in enumerate(self.choices):
+            btn = QPushButton(self)
+            btn.setCheckable(True)
+            pixmap = latex_to_pixmap(ans)
+            btn.setIcon(QIcon(pixmap))
+            btn.setIconSize(pixmap.size())
+            self.answer_group.addButton(btn, i)
+            self.answer_buttons.append(btn)
+            answer_layout.addWidget(btn)
+            # ボタンが選択されたら即画面遷移
+            btn.clicked.connect(lambda _, idx=i: self.on_choice_selected(idx))
 
         # 右側レイアウト
         right_layout = QVBoxLayout()
@@ -86,8 +104,7 @@ class DifferentialGame(QWidget):
         right_layout.addWidget(self.hint2_btn, alignment=Qt.AlignTop)
         right_layout.addWidget(self.hint2_label, alignment=Qt.AlignTop)
         right_layout.addStretch(1)
-        right_layout.addWidget(self.answer_edit, alignment=Qt.AlignBottom)
-        right_layout.addWidget(self.submit_btn, alignment=Qt.AlignBottom)
+        right_layout.addLayout(answer_layout)
 
         # 全体レイアウト
         main_layout = QHBoxLayout()
@@ -104,11 +121,10 @@ class DifferentialGame(QWidget):
         self.hint2_label.setText("ヒント2: " + self.data[self.current]["Hint2"])
         self.hint2_btn.setEnabled(False)
 
-    def check_answer(self):
-        user_answer = self.answer_edit.text().strip()
+    def on_choice_selected(self, idx):
+        user_answer = self.choices[idx].strip()
         correct_answer = self.data[self.current]["Answer"].strip()
         explanation = self.data[self.current]["Explanation"]
-        # 回答後にAnswer画面を表示
         self.answer_window = AnswerWindow(
             correct_answer, explanation, self.current, len(self.data), self
         )
@@ -125,12 +141,23 @@ class DifferentialGame(QWidget):
             # formula（数式画像）
             formula_text = self.data[self.current]["formula"]
             self.formula_label.setPixmap(latex_to_pixmap(formula_text))
+            # 選択肢を再度ランダムに配置（数式画像）
+            self.choices = [
+                self.data[self.current]["select1"].strip(),
+                self.data[self.current]["select2"].strip(),
+                self.data[self.current]["Answer"].strip()
+            ]
+            random.shuffle(self.choices)
+            for i, btn in enumerate(self.answer_buttons):
+                pixmap = latex_to_pixmap(self.choices[i])
+                btn.setIcon(QIcon(pixmap))
+                btn.setIconSize(pixmap.size())
+                btn.setChecked(False)
             # ヒント・回答欄リセット
             self.hint1_label.setText("")
             self.hint2_label.setText("")
             self.hint1_btn.setEnabled(True)
             self.hint2_btn.setEnabled(True)
-            self.answer_edit.clear()
             self.showMaximized()
         else:
             QMessageBox.information(self, "終了", "全ての問題が終了しました")
