@@ -12,9 +12,6 @@ import tempfile
 from PyQt5.QtGui import QPixmap
 
 def latex_to_pixmap(latex_str):
-    # latex_strが$で囲まれていなければ自動で囲む
-    if not (latex_str.startswith("$") and latex_str.endswith("$")):
-        latex_str = f"${latex_str}$"
     fig = plt.figure(figsize=(2, 0.7))
     fig.text(0.5, 0.5, latex_str, fontsize=24, ha='center', va='center')
     fig.patch.set_alpha(0)
@@ -50,16 +47,19 @@ class DifferentialGame(QWidget):
         # 問題欄（左半分の中心）
         left_layout = QVBoxLayout()
         left_layout.addStretch(1)
-        # LaTeX数式を画像化して表示
-        self.question_label = QLabel(self)
-        self.question_label.setAlignment(Qt.AlignCenter)
+        # Question（テキスト）を上に表示
         question_text = self.data[self.current]["Question"]
-        if question_text.startswith("$") and question_text.endswith("$"):
-            self.question_label.setPixmap(latex_to_pixmap(question_text))
-        else:
-            self.question_label.setText(question_text)
-            self.question_label.setFont(QFont("Arial", 18, QFont.Bold))
-        left_layout.addWidget(self.question_label)
+        self.question_text_label = QLabel(question_text, self)
+        self.question_text_label.setFont(QFont("Arial", 18, QFont.Bold))
+        self.question_text_label.setAlignment(Qt.AlignCenter)
+        left_layout.addWidget(self.question_text_label)
+        # formula（数式）を画像で表示
+        formula_text = self.data[self.current]["formula"]
+        self.formula_label = QLabel(self)
+        self.formula_label.setAlignment(Qt.AlignCenter)
+        # latex_to_pixmapで画像化して表示
+        self.formula_label.setPixmap(latex_to_pixmap(formula_text))
+        left_layout.addWidget(self.formula_label)
         left_layout.addStretch(1)
 
         # ヒント欄（右上）: ボタンで隠す
@@ -118,14 +118,14 @@ class DifferentialGame(QWidget):
     def show_next(self, next_index):
         if next_index < len(self.data):
             self.current = next_index
+            # Question（テキスト）
             question_text = self.data[self.current]["Question"]
-            if question_text.startswith("$") and question_text.endswith("$"):
-                self.question_label.setPixmap(latex_to_pixmap(question_text))
-                self.question_label.setText("")  # 画像表示時はテキストをクリア
-            else:
-                self.question_label.setPixmap(QPixmap())  # 画像をクリア
-                self.question_label.setText(question_text)
-                self.question_label.setFont(QFont("Arial", 18, QFont.Bold))
+            self.question_text_label.setText(question_text)
+            self.question_text_label.setFont(QFont("Arial", 18, QFont.Bold))
+            # formula（数式画像）
+            formula_text = self.data[self.current]["formula"]
+            self.formula_label.setPixmap(latex_to_pixmap(formula_text))
+            # ヒント・回答欄リセット
             self.hint1_label.setText("")
             self.hint2_label.setText("")
             self.hint1_btn.setEnabled(True)
