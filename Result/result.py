@@ -1,6 +1,21 @@
 from PyQt5.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QHBoxLayout
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QPixmap
 from PyQt5.QtCore import Qt
+import matplotlib.pyplot as plt
+import tempfile
+
+
+def latex_to_pixmap(latex_str):
+    fig = plt.figure(figsize=(2, 0.7))
+    fig.text(0.5, 0.5, latex_str, fontsize=32, ha='center', va='center')
+    fig.patch.set_alpha(0)
+    plt.axis('off')
+    fig.canvas.draw()
+    with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmpfile:
+        fig.savefig(tmpfile.name, bbox_inches='tight', pad_inches=0.2, transparent=True)
+        plt.close(fig)
+        pixmap = QPixmap(tmpfile.name)
+    return pixmap
 
 
 class AnswerWindow(QWidget):
@@ -11,14 +26,22 @@ class AnswerWindow(QWidget):
         self.next_index = current + 1
 
         layout = QVBoxLayout()
-        answer_label = QLabel(f"答え: {answer}", self)
-        answer_label.setFont(QFont("Arial", 32, QFont.Bold))
-        answer_label.setAlignment(Qt.AlignCenter)
+        # 答えをlatex画像で表示
+        answer_row = QHBoxLayout()
+        answer_text_label = QLabel("答え:", self)
+        answer_text_label.setFont(QFont("Arial", 24, QFont.Bold))
+        answer_text_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        answer_label = QLabel(self)
+        answer_label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        answer_label.setPixmap(latex_to_pixmap(answer))
+        answer_row.addWidget(answer_text_label)
+        answer_row.addWidget(answer_label)
+        layout.addStretch(1)
+        layout.addLayout(answer_row)
+        # 解説はテキストで表示
         explanation_label = QLabel(explanation, self)
         explanation_label.setFont(QFont("Arial", 18))
         explanation_label.setAlignment(Qt.AlignCenter)
-        layout.addStretch(1)
-        layout.addWidget(answer_label)
         layout.addWidget(explanation_label)
         layout.addStretch(1)
 
