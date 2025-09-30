@@ -1,7 +1,7 @@
-#user data
+# user data
 Login/UserData/
 
-#Ignore __pycache__ directories
+# Ignore __pycache__ directories
 **/__pycache__/
 *.pyc
 
@@ -11,3 +11,7 @@ Login/UserData/
 
 # GameData
 GameFrame/GameData/
+
+# 環境変数
+.env
+.env.*
