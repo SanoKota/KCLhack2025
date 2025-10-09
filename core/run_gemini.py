@@ -3,7 +3,7 @@ import pandas as pd
 from dotenv import load_dotenv
 from typing import Type, List
 from pydantic import BaseModel
-from create_math import createdifferential, createintegral, USER_PROMPT
+from core.create_math import createdifferential, createintegral, USER_PROMPT
 import io
 
 # APIキーを使用してGemini APIを設定
@@ -22,13 +22,17 @@ class MathProblem(BaseModel):
 def formatter(response):
     import io
     import re
-    # CSV部分だけ抽出（余計な説明文がある場合に備えて）
     text = response.text
-    match = re.search(r"(Question,formula,Hint1,Hint2,select1,select2,Answer,Explanation[\s\S]+)", text)
+    # CSVヘッダーから始まる部分だけ抽出
+    match = re.search(r"(ID,Question,formula,Hint1,Hint2,select1,select2,Answer,Explanation[\s\S]+)", text)
     if match:
-        text = match.group(1)
-    df = pd.read_csv(io.StringIO(text))
-    return df
+        csv_text = match.group(1)
+        # 余計な空行を除去
+        csv_text = "\n".join([line for line in csv_text.splitlines() if line.strip()])
+        df = pd.read_csv(io.StringIO(csv_text))
+        return df
+    else:
+        raise ValueError("CSV部分が見つかりません")
 
 def run_gemini(subject: str) -> pd.DataFrame:
     """
