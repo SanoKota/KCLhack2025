@@ -5,8 +5,10 @@ from GameFrame.question import DifferentialGame
 import sys
 
 class GamePage(QWidget):
-    def __init__(self):
+    def __init__(self, df):
         super().__init__()
+        self.df = df
+        # ここでdfを使って問題画面を構築
         self.diff_window = None
         self.mode = None  # "微分" or "積分"
 

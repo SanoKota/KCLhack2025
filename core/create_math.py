@@ -14,6 +14,7 @@ class createdifferential:
         5. 問題に数式を記述しないでください。
         6. 解説は具体的かつ詳細に記述してください。
         7. 問題に対して回答を正確に記述してください。
+        8. CSV形式で出力してください。ヘッダーは、ID,Question,formula,Hint1,Hint2,select1,select2,Answer,Explanation としてください。
         
         ## 微分の基本ルール
         - 定数の微分: 定数の微分は0です。例えば、f(x) = 5のとき、f'(x) = 0です。
@@ -36,6 +37,7 @@ class createintegral:
         5. 問題に数式を記述しないでください。
         6. 解説は具体的かつ詳細に記述してください。
         7. 問題に対して回答を正確に記述してください。
+        8. CSV形式で出力してください。ヘッダーは、ID,Question,formula,Hint1,Hint2,select1,select2,Answer,Explanation としてください。
         
         ## 積分の基本ルール
         - 定数の積分: 定数の積分は、定数に変数を掛けたものに等しいです。例えば、$\int 5 \, dx = 5x + C$です。

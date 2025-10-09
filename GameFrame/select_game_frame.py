@@ -3,6 +3,8 @@ from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QPushButton, QVBoxLay
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from .game_page import GamePage  # パッケージとして実行する場合
+from .making_problem import MakingProblemWindow  # 追加
+from .question import DifferentialGame  # 追加
 
 class RangeSelectFrame(QWidget):
     def __init__(self):
@@ -44,15 +46,15 @@ class RangeSelectFrame(QWidget):
         sender = self.sender()
         selected_range = sender.text()
         print(f"選択された範囲: {selected_range}")
-        ranges = {
-            "微分": "Differential",
-            "積分": "Integral",
-        }
-        if selected_range in ranges:
-            class_name = ranges[selected_range]
-            self.game_page = GamePage()  # インスタンスを保持
-            getattr(self.game_page, class_name)()  # 該当メソッドを呼び出す
-        # self.hide()
+
+        def go_to_question_page(df):
+            self.question_window = DifferentialGame(df, mode=selected_range)
+            self.question_window.show()
+            self.close()
+
+        self.making_window = MakingProblemWindow(selected_range, go_to_question_page)
+        self.making_window.show()
+        self.hide()
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)

@@ -25,24 +25,16 @@ def latex_to_pixmap(latex_str):
     return pixmap
 
 class DifferentialGame(QWidget):
-    def __init__(self, mode="微分"):
+    def __init__(self, df, mode="微分"):
         super().__init__()
-        self.mode = mode  # "微分" or "積分"
+        self.mode = mode
         self.setWindowTitle(f"{self.mode}問題")
         self.setFont(QFont("Arial", 14))
-        # modeに応じてCSVファイルを切り替え
-        if self.mode == "微分":
-            csv_path = "GameFrame/GameData/differentioal.csv"
-        else:
-            csv_path = "GameFrame/GameData/integral.csv"
-        self.data = self.load_csv(csv_path)
+        # カラム名の空白を除去
+        df.columns = [col.strip() for col in df.columns]
+        self.data = df.to_dict(orient="records")
         self.current = 0
         self.init_ui()
-
-    def load_csv(self, path):
-        with open(path, encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            return list(reader)
 
     def init_ui(self):
         # 問題欄（左半分の中心）
@@ -53,13 +45,18 @@ class DifferentialGame(QWidget):
         self.question_text_label = QLabel(question_text, self)
         self.question_text_label.setFont(QFont("Arial", 18, QFont.Bold))
         self.question_text_label.setAlignment(Qt.AlignCenter)
+        self.question_text_label.setWordWrap(True)
         left_layout.addWidget(self.question_text_label)
-        # formula（数式）を画像で表示
+        # formula（数式）をlatex画像で表示
         formula_text = self.data[self.current]["formula"]
         self.formula_label = QLabel(self)
         self.formula_label.setAlignment(Qt.AlignCenter)
-        # latex_to_pixmapで画像化して表示
-        self.formula_label.setPixmap(latex_to_pixmap(formula_text))
+        # latex数式部分のみ抽出して画像化
+        if formula_text.startswith("$") and formula_text.endswith("$"):
+            self.formula_label.setPixmap(latex_to_pixmap(formula_text))
+        else:
+            # $で囲まれていない場合は自動で囲む
+            self.formula_label.setPixmap(latex_to_pixmap(f"${formula_text}$"))
         left_layout.addWidget(self.formula_label)
         left_layout.addStretch(1)
 
@@ -67,11 +64,13 @@ class DifferentialGame(QWidget):
         self.hint1_btn = QPushButton("ヒント1を表示", self)
         self.hint1_label = QLabel("", self)
         self.hint1_label.setFont(QFont("Arial", 12))
+        self.hint1_label.setWordWrap(True)  # ←追加：自動改行
         self.hint1_btn.clicked.connect(self.show_hint1)
 
         self.hint2_btn = QPushButton("ヒント2を表示", self)
         self.hint2_label = QLabel("", self)
         self.hint2_label.setFont(QFont("Arial", 12))
+        self.hint2_label.setWordWrap(True)  # ←追加：自動改行
         self.hint2_btn.clicked.connect(self.show_hint2)
 
         # 回答欄（右下）を3択ボタン（数式画像）に変更
@@ -114,11 +113,62 @@ class DifferentialGame(QWidget):
         self.showMaximized()
 
     def show_hint1(self):
-        self.hint1_label.setText("ヒント1: " + self.data[self.current]["Hint1"])
+        hint1 = self.data[self.current]["Hint1"]
+        # $...$ で囲まれた数式があれば画像表示
+        if "$" in hint1:
+            import re
+            parts = re.split(r'(\$.*?\$|\$\$.*?\$\$)', hint1)
+            self.hint1_label.clear()
+            hint_layout = QVBoxLayout()
+            for part in parts:
+                if re.match(r'^\$.*\$$', part) or re.match(r'^\$\$.*\$\$$', part):
+                    label = QLabel(self)
+                    label.setPixmap(latex_to_pixmap(part))
+                    label.setAlignment(Qt.AlignLeft)
+                    hint_layout.addWidget(label)
+                elif part.strip():
+                    label = QLabel(part, self)
+                    label.setFont(QFont("Arial", 12))
+                    label.setWordWrap(True)
+                    label.setAlignment(Qt.AlignLeft)
+                    hint_layout.addWidget(label)
+            # QWidgetにレイアウトを設定
+            hint_widget = QWidget()
+            hint_widget.setLayout(hint_layout)
+            # ヒントラベルの親レイアウトに追加
+            parent_layout = self.hint1_label.parentWidget().layout()
+            parent_layout.replaceWidget(self.hint1_label, hint_widget)
+            self.hint1_label.hide()
+        else:
+            self.hint1_label.setText("ヒント1: " + hint1)
         self.hint1_btn.setEnabled(False)
 
     def show_hint2(self):
-        self.hint2_label.setText("ヒント2: " + self.data[self.current]["Hint2"])
+        hint2 = self.data[self.current]["Hint2"]
+        if "$" in hint2:
+            import re
+            parts = re.split(r'(\$.*?\$|\$\$.*?\$\$)', hint2)
+            self.hint2_label.clear()
+            hint_layout = QVBoxLayout()
+            for part in parts:
+                if re.match(r'^\$.*\$$', part) or re.match(r'^\$\$.*\$\$$', part):
+                    label = QLabel(self)
+                    label.setPixmap(latex_to_pixmap(part))
+                    label.setAlignment(Qt.AlignLeft)
+                    hint_layout.addWidget(label)
+                elif part.strip():
+                    label = QLabel(part, self)
+                    label.setFont(QFont("Arial", 12))
+                    label.setWordWrap(True)
+                    label.setAlignment(Qt.AlignLeft)
+                    hint_layout.addWidget(label)
+            hint_widget = QWidget()
+            hint_widget.setLayout(hint_layout)
+            parent_layout = self.hint2_label.parentWidget().layout()
+            parent_layout.replaceWidget(self.hint2_label, hint_widget)
+            self.hint2_label.hide()
+        else:
+            self.hint2_label.setText("ヒント2: " + hint2)
         self.hint2_btn.setEnabled(False)
 
     def on_choice_selected(self, idx):
@@ -140,7 +190,10 @@ class DifferentialGame(QWidget):
             self.question_text_label.setFont(QFont("Arial", 18, QFont.Bold))
             # formula（数式画像）
             formula_text = self.data[self.current]["formula"]
-            self.formula_label.setPixmap(latex_to_pixmap(formula_text))
+            if formula_text.startswith("$") and formula_text.endswith("$"):
+                self.formula_label.setPixmap(latex_to_pixmap(formula_text))
+            else:
+                self.formula_label.setPixmap(latex_to_pixmap(f"${formula_text}$"))
             # 選択肢を再度ランダムに配置（数式画像）
             self.choices = [
                 self.data[self.current]["select1"].strip(),
