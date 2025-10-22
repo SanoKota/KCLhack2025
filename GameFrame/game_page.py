@@ -14,10 +14,10 @@ class GamePage(QWidget):
 
     def Differential(self):
         self.mode = "微分"
-        self.diff_window = DifferentialGame(mode=self.mode)
+        self.diff_window = DifferentialGame(self.df, mode=self.mode)
         self.diff_window.show()
 
     def Integral(self):
         self.mode = "積分"
-        self.diff_window = DifferentialGame(mode=self.mode)
+        self.diff_window = DifferentialGame(self.df, mode=self.mode)
         self.diff_window.show()
