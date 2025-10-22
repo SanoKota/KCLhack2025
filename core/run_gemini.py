@@ -36,7 +36,7 @@ def formatter(response):
 
 def run_gemini(subject: str) -> pd.DataFrame:
     """
-    Gemini APIを使用してコンテンツを生成する関数。
+    Gemini APIを使用してコンテンツを生成し、ID自動付与でCSVに保存する関数。
     """
     # .envファイルのパスを明示的に指定
     load_dotenv()
@@ -57,11 +57,38 @@ def run_gemini(subject: str) -> pd.DataFrame:
             {"text": USER_PROMPT}
         ])
         # DataFrameで返す
-        return formatter(response)
+        df = formatter(response)
+        # ここでID自動付与でCSV保存
+        save_problem_with_incremented_id(subject, df)
+        return df
     else:
-        print("APIキーが設定されていません。")
-        return pd.DataFrame()
+        raise RuntimeError("APIキーが設定されていません")
 
+def save_problem_with_incremented_id(subject: str, problem_df: pd.DataFrame):
+    """
+    既存CSVのIDの最大値+1から連番で新しいIDを付与し、全問題を追記保存する
+    subject: "微分" または "積分"
+    problem_df: 複数問分のDataFrame
+    """
+    if subject == "微分":
+        csv_path = "GameFrame/GameData/differentioal.csv"
+    elif subject == "積分":
+        csv_path = "GameFrame/GameData/integral.csv"
+    else:
+        raise ValueError("未対応のsubject")
+    # 既存CSVのID最大値を取得
+    import pandas as pd
+    try:
+        existing = pd.read_csv(csv_path, encoding="utf-8")
+        max_id = existing['ID'].astype(int).max()
+    except Exception:
+        max_id = -1
+    # 10問分に連番IDを付与
+    problem_df = problem_df.copy()
+    problem_df['ID'] = range(max_id + 1, max_id + 1 + len(problem_df))
+    # 追記保存
+    problem_df.to_csv(csv_path, mode="a", header=False, index=False, encoding="utf-8")
+    print(f"{csv_path} にID={max_id+1}～{max_id+len(problem_df)}で問題を追加保存しました")
 
 if __name__ == "__main__":
     subject = "微分"
