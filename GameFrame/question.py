@@ -13,16 +13,30 @@ from PyQt5.QtGui import QPixmap
 import random
 
 def latex_to_pixmap(latex_str):
+    import matplotlib
     fig = plt.figure(figsize=(2, 0.7))
-    fig.text(0.5, 0.5, latex_str, fontsize=24, ha='center', va='center')
-    fig.patch.set_alpha(0)
-    plt.axis('off')
-    fig.canvas.draw()
-    with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmpfile:
-        fig.savefig(tmpfile.name, bbox_inches='tight', pad_inches=0.2, transparent=True)
+    try:
+        fig.text(0.5, 0.5, latex_str, fontsize=24, ha='center', va='center')
+        fig.patch.set_alpha(0)
+        plt.axis('off')
+        fig.canvas.draw()
+        with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tmpfile:
+            fig.savefig(tmpfile.name, bbox_inches='tight', pad_inches=0.2, transparent=True)
+            plt.close(fig)
+            pixmap = QPixmap(tmpfile.name)
+        return pixmap
+    except Exception as e:
         plt.close(fig)
-        pixmap = QPixmap(tmpfile.name)
-    return pixmap
+        # フォールバック: テキストとして表示
+        from PyQt5.QtGui import QImage, QPainter
+        image = QImage(400, 60, QImage.Format_ARGB32)
+        image.fill(Qt.transparent)
+        painter = QPainter(image)
+        painter.setFont(QFont("Arial", 24))
+        painter.setPen(Qt.black)
+        painter.drawText(10, 40, latex_str)
+        painter.end()
+        return QPixmap.fromImage(image)
 
 class DifferentialGame(QWidget):
     def __init__(self, df, mode="微分"):
@@ -43,7 +57,7 @@ class DifferentialGame(QWidget):
         # Question（テキスト）を上に表示
         question_text = self.data[self.current]["Question"]
         self.question_text_label = QLabel(question_text, self)
-        self.question_text_label.setFont(QFont("Arial", 18, QFont.Bold))
+        self.question_text_label.setFont(QFont("Arial", 24, QFont.Bold))
         self.question_text_label.setAlignment(Qt.AlignCenter)
         self.question_text_label.setWordWrap(True)
         left_layout.addWidget(self.question_text_label)
@@ -62,16 +76,20 @@ class DifferentialGame(QWidget):
 
         # ヒント欄（右上）: ボタンで隠す
         self.hint1_btn = QPushButton("ヒント1を表示", self)
+        self.hint1_btn.setFont(QFont("Arial", 20))
         self.hint1_label = QLabel("", self)
-        self.hint1_label.setFont(QFont("Arial", 12))
+        self.hint1_label.setFont(QFont("Arial", 20))
         self.hint1_label.setWordWrap(True)  # ←追加：自動改行
         self.hint1_btn.clicked.connect(self.show_hint1)
+        self.hint1_btn.setCheckable(False)
 
         self.hint2_btn = QPushButton("ヒント2を表示", self)
+        self.hint2_btn.setFont(QFont("Arial", 20))
         self.hint2_label = QLabel("", self)
-        self.hint2_label.setFont(QFont("Arial", 12))
+        self.hint2_label.setFont(QFont("Arial", 20))
         self.hint2_label.setWordWrap(True)  # ←追加：自動改行
         self.hint2_btn.clicked.connect(self.show_hint2)
+        self.hint2_btn.setCheckable(False)
 
         # 回答欄（右下）を3択ボタン（数式画像）に変更
         self.choices = [
@@ -84,6 +102,7 @@ class DifferentialGame(QWidget):
         self.answer_group = QButtonGroup(self)
         self.answer_buttons = []
         answer_layout = QHBoxLayout()
+
         for i, ans in enumerate(self.choices):
             btn = QPushButton(self)
             btn.setCheckable(True)
@@ -94,7 +113,11 @@ class DifferentialGame(QWidget):
             self.answer_buttons.append(btn)
             answer_layout.addWidget(btn)
             # ボタンが選択されたら即画面遷移
-            btn.clicked.connect(lambda _, idx=i: self.on_choice_selected(idx))
+            btn.setCheckable(False)
+            # 正誤判定（Answerと完全一致ならTrue、そうでなければFalse）
+            btn.is_correct = (ans == self.data[self.current]["Answer"].strip())
+            btn.clicked.connect(lambda _, idx=i, b=btn: self.on_choice_selected(idx, b.is_correct))
+
 
         # 右側レイアウト
         right_layout = QVBoxLayout()
@@ -102,7 +125,7 @@ class DifferentialGame(QWidget):
         right_layout.addWidget(self.hint1_label, alignment=Qt.AlignTop)
         right_layout.addWidget(self.hint2_btn, alignment=Qt.AlignTop)
         right_layout.addWidget(self.hint2_label, alignment=Qt.AlignTop)
-        right_layout.addStretch(1)
+        right_layout.addStretch(2)
         right_layout.addLayout(answer_layout)
 
         # 全体レイアウト
@@ -171,12 +194,13 @@ class DifferentialGame(QWidget):
             self.hint2_label.setText("ヒント2: " + hint2)
         self.hint2_btn.setEnabled(False)
 
-    def on_choice_selected(self, idx):
+    def on_choice_selected(self, idx, _):
         user_answer = self.choices[idx].strip()
         correct_answer = self.data[self.current]["Answer"].strip()
         explanation = self.data[self.current]["Explanation"]
+        is_correct = (user_answer == correct_answer)
         self.answer_window = AnswerWindow(
-            correct_answer, explanation, self.current, len(self.data), self
+            correct_answer, explanation, self.current, len(self.data), self, is_correct
         )
         self.answer_window.showMaximized()
         self.hide()

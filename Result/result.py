@@ -4,6 +4,7 @@ from PyQt5.QtCore import Qt
 import matplotlib.pyplot as plt
 import tempfile
 import re
+from GameFrame.select_game_frame import RangeSelectFrame
 
 
 def latex_to_pixmap(latex_str):
@@ -20,7 +21,7 @@ def latex_to_pixmap(latex_str):
 
 
 class AnswerWindow(QWidget):
-    def __init__(self, answer, explanation, current, total, parent_game):
+    def __init__(self, answer, explanation, current, total, parent_game, flag):
         super().__init__()
         self.setWindowTitle("回答")
         self.parent_game = parent_game
@@ -29,7 +30,11 @@ class AnswerWindow(QWidget):
         main_layout = QVBoxLayout()
         # 答えをlatex画像で表示
         answer_row = QHBoxLayout()
-        answer_text_label = QLabel("答え:", self)
+
+        if flag == True:
+            answer_text_label = QLabel("〇正解　答え:", self)
+        else:
+            answer_text_label = QLabel("×不正解　答え:", self)
         answer_text_label.setFont(QFont("Arial", 24, QFont.Bold))
         answer_text_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         answer_label = QLabel(self)
@@ -56,7 +61,7 @@ class AnswerWindow(QWidget):
                 explanation_layout.addWidget(label)
             elif part.strip():
                 label = QLabel(part, explanation_widget)
-                label.setFont(QFont("Arial", 18))
+                label.setFont(QFont("Arial", 22))
                 label.setAlignment(Qt.AlignCenter)
                 label.setWordWrap(True)
                 explanation_layout.addWidget(label)
@@ -65,11 +70,11 @@ class AnswerWindow(QWidget):
 
         btn_layout = QHBoxLayout()
         self.next_btn = QPushButton("次の問題へ", self)
-        self.next_btn.setFont(QFont("Arial", 16))
+        self.next_btn.setFont(QFont("Arial", 20))
         self.next_btn.clicked.connect(self.next_question)
         self.exit_btn = QPushButton("終了する", self)
-        self.exit_btn.setFont(QFont("Arial", 16))
-        self.exit_btn.clicked.connect(self.close)
+        self.exit_btn.setFont(QFont("Arial", 20))
+        self.exit_btn.clicked.connect(self.open_select_window)
         btn_layout.addWidget(self.next_btn)
         btn_layout.addWidget(self.exit_btn)
         main_layout.addLayout(btn_layout)
@@ -80,3 +85,8 @@ class AnswerWindow(QWidget):
     def next_question(self):
         self.close()
         self.parent_game.show_next(self.next_index)
+
+    def open_select_window(self):
+        self.select_window = RangeSelectFrame()
+        self.select_window.show()
+        self.close()

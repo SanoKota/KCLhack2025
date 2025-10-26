@@ -39,7 +39,6 @@ class SelectGameFrame(QWidget):
         diff_label.setFont(QFont("Arial", 16, QFont.Bold))
         diff_label.setAlignment(Qt.AlignCenter)
         diff_layout.addWidget(diff_label)
-        # ボタン幅をラベル幅に合わせる
         button_width = 220
         diff_btn = QPushButton("微分", self)
         diff_btn.setFont(QFont("Arial", 20, QFont.Bold))
@@ -55,6 +54,13 @@ class SelectGameFrame(QWidget):
         diff_create_btn.clicked.connect(lambda: self.create_problem("微分"))
         self.buttons.append(diff_create_btn)
         diff_layout.addWidget(diff_create_btn)
+        # 問題一覧ボタン追加
+        diff_list_btn = QPushButton("問題一覧", self)
+        diff_list_btn.setFont(QFont("Arial", 14, QFont.Bold))
+        diff_list_btn.setStyleSheet("background-color: #fff; color: #222; border: 2px solid #26c6da; border-radius: 24px; min-height: 40px; margin-top: 12px;")
+        diff_list_btn.setFixedWidth(button_width)
+        diff_list_btn.clicked.connect(lambda: self.show_problem_list("微分"))
+        diff_layout.addWidget(diff_list_btn)
         diff_frame.setLayout(diff_layout)
         # 影エフェクト追加
         shadow_diff = QGraphicsDropShadowEffect()
@@ -87,6 +93,13 @@ class SelectGameFrame(QWidget):
         int_create_btn.clicked.connect(lambda: self.create_problem("積分"))
         self.buttons.append(int_create_btn)
         int_layout.addWidget(int_create_btn)
+        # 問題一覧ボタン追加
+        int_list_btn = QPushButton("問題一覧", self)
+        int_list_btn.setFont(QFont("Arial", 14, QFont.Bold))
+        int_list_btn.setStyleSheet("background-color: #fff; color: #222; border: 2px solid #26c6da; border-radius: 24px; min-height: 40px; margin-top: 12px;")
+        int_list_btn.setFixedWidth(button_width)
+        int_list_btn.clicked.connect(lambda: self.show_problem_list("積分"))
+        int_layout.addWidget(int_list_btn)
         int_frame.setLayout(int_layout)
         # 影エフェクト追加
         shadow_int = QGraphicsDropShadowEffect()
@@ -187,17 +200,23 @@ class SelectGameFrame(QWidget):
             btn.setEnabled(True)
 
 
+    # 問題一覧表示用のダミー関数
+    def show_problem_list(self, topic):
+        from GameFrame.open_full_Q import ProblemListWindow
+        self.problem_list_window = ProblemListWindow(topic)
+        self.problem_list_window.showMaximized()
+
     def resizeEvent(self, event):
         win_width = self.width()
         win_height = self.height()
         
         # ボタンサイズを動的に変更
-        btn_w = int(win_width * 0.18)
-        btn_h = int(win_height * 0.18)
+        btn_w = int(win_width * 0.455)
+        btn_h = int(win_height * 0.20)
         for btn in getattr(self, 'buttons', []):
             btn.setMinimumSize(btn_w, btn_h)
             btn.setMaximumSize(btn_w, btn_h)
-            
+        
         # オーバーレイもリサイズ
         if hasattr(self, 'overlay'):
             self.overlay.setGeometry(0, 0, win_width, win_height)

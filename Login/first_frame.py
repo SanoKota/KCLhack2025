@@ -15,13 +15,9 @@ class VariableWindows(QWidget):
 
     def frame(self):
         self.setWindowTitle("微分積分マスター")
-        self.label = QLabel("スタート", self)
-        self.label.setFont(QFont("Arial", 24, QFont.Bold))
-        self.label.setAlignment(Qt.AlignCenter)
-        self.label.setStyleSheet("color: #1a73e8; margin: 20px; background: transparent;")
 
         self.start_btn = QPushButton("スタート", self)
-        self.start_btn.setFont(QFont("Arial", 18, QFont.Bold))
+        self.start_btn.setFont(QFont("Arial", 36, QFont.Bold))
         self.start_btn.clicked.connect(self.open_select_window)
 
         btn_layout = QHBoxLayout()
@@ -30,9 +26,7 @@ class VariableWindows(QWidget):
         btn_layout.addStretch(1)
 
         layout = QVBoxLayout()
-        layout.addStretch(2)
-        layout.addWidget(self.label)
-        layout.addStretch(1)
+        layout.addStretch(10)
         layout.addLayout(btn_layout)
         layout.addStretch(3)
         self.setLayout(layout)
