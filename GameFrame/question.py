@@ -47,7 +47,14 @@ class DifferentialGame(QWidget):
         # カラム名の空白を除去
         df.columns = [col.strip() for col in df.columns]
         self.data = df.to_dict(orient="records")
-        self.current = 0
+        # ID最大値取得
+        self.max_id = max([int(row["ID"]) for row in self.data if str(row["ID"]).isdigit()])
+        # ランダムなIDで出題
+        import random
+        self.current = random.randint(0, self.max_id)
+        # self.currentが存在しないIDの場合は最初のIDに
+        if not any(int(row["ID"]) == self.current for row in self.data):
+            self.current = int(self.data[0]["ID"])
         self.init_ui()
 
     def init_ui(self):
@@ -208,34 +215,34 @@ class DifferentialGame(QWidget):
     def show_next(self, next_index):
         if next_index < len(self.data):
             self.current = next_index
-            # Question（テキスト）
-            question_text = self.data[self.current]["Question"]
-            self.question_text_label.setText(question_text)
-            self.question_text_label.setFont(QFont("Arial", 18, QFont.Bold))
-            # formula（数式画像）
-            formula_text = self.data[self.current]["formula"]
-            if formula_text.startswith("$") and formula_text.endswith("$"):
-                self.formula_label.setPixmap(latex_to_pixmap(formula_text))
-            else:
-                self.formula_label.setPixmap(latex_to_pixmap(f"${formula_text}$"))
-            # 選択肢を再度ランダムに配置（数式画像）
-            self.choices = [
-                self.data[self.current]["select1"].strip(),
-                self.data[self.current]["select2"].strip(),
-                self.data[self.current]["Answer"].strip()
-            ]
-            random.shuffle(self.choices)
-            for i, btn in enumerate(self.answer_buttons):
-                pixmap = latex_to_pixmap(self.choices[i])
-                btn.setIcon(QIcon(pixmap))
-                btn.setIconSize(pixmap.size())
-                btn.setChecked(False)
-            # ヒント・回答欄リセット
-            self.hint1_label.setText("")
-            self.hint2_label.setText("")
-            self.hint1_btn.setEnabled(True)
-            self.hint2_btn.setEnabled(True)
-            self.showMaximized()
         else:
-            QMessageBox.information(self, "終了", "全ての問題が終了しました")
-            self.close()
+            # 最後まで行ったらID0に戻る
+            self.current = 0
+        # Question（テキスト）
+        question_text = self.data[self.current]["Question"]
+        self.question_text_label.setText(question_text)
+        self.question_text_label.setFont(QFont("Arial", 18, QFont.Bold))
+        # formula（数式画像）
+        formula_text = self.data[self.current]["formula"]
+        if formula_text.startswith("$") and formula_text.endswith("$"):
+            self.formula_label.setPixmap(latex_to_pixmap(formula_text))
+        else:
+            self.formula_label.setPixmap(latex_to_pixmap(f"${formula_text}$"))
+        # 選択肢を再度ランダムに配置（数式画像）
+        self.choices = [
+            self.data[self.current]["select1"].strip(),
+            self.data[self.current]["select2"].strip(),
+            self.data[self.current]["Answer"].strip()
+        ]
+        random.shuffle(self.choices)
+        for i, btn in enumerate(self.answer_buttons):
+            pixmap = latex_to_pixmap(self.choices[i])
+            btn.setIcon(QIcon(pixmap))
+            btn.setIconSize(pixmap.size())
+            btn.setChecked(False)
+        # ヒント・回答欄リセット
+        self.hint1_label.setText("")
+        self.hint2_label.setText("")
+        self.hint1_btn.setEnabled(True)
+        self.hint2_btn.setEnabled(True)
+        self.showMaximized()
