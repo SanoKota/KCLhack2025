@@ -211,7 +211,7 @@ class SelectGameFrame(QWidget):
         win_height = self.height()
         
         # ボタンサイズを動的に変更
-        btn_w = int(win_width * 0.455)
+        btn_w = int(win_width * 0.44)
         btn_h = int(win_height * 0.20)
         for btn in getattr(self, 'buttons', []):
             btn.setMinimumSize(btn_w, btn_h)

@@ -70,10 +70,10 @@ class AnswerWindow(QWidget):
 
         btn_layout = QHBoxLayout()
         self.next_btn = QPushButton("次の問題へ", self)
-        self.next_btn.setFont(QFont("Arial", 20))
+        self.next_btn.setFont(QFont("Arial", 30))
         self.next_btn.clicked.connect(self.next_question)
         self.exit_btn = QPushButton("終了する", self)
-        self.exit_btn.setFont(QFont("Arial", 20))
+        self.exit_btn.setFont(QFont("Arial", 30))
         self.exit_btn.clicked.connect(self.open_select_window)
         btn_layout.addWidget(self.next_btn)
         btn_layout.addWidget(self.exit_btn)
@@ -83,8 +83,8 @@ class AnswerWindow(QWidget):
         self.showMaximized()
 
     def next_question(self):
-        self.close()
         self.parent_game.show_next(self.next_index)
+        self.close()
 
     def open_select_window(self):
         self.select_window = RangeSelectFrame()

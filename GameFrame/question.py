@@ -7,10 +7,12 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtCore import Qt
 from Result.result import AnswerWindow
+from Result.sum_result import SumResultWindow
 import matplotlib.pyplot as plt
 import tempfile
 from PyQt5.QtGui import QPixmap
 import random
+from GameFrame.select_game_frame import RangeSelectFrame
 
 def latex_to_pixmap(latex_str):
     import matplotlib
@@ -39,6 +41,39 @@ def latex_to_pixmap(latex_str):
         return QPixmap.fromImage(image)
 
 class DifferentialGame(QWidget):
+    def show_hint1(self):
+        hint1 = self.data[self.current]["Hint1"]
+        # $...$ で囲まれた数式があれば画像表示
+        if "$" in hint1:
+            import re
+            parts = re.split(r'(\$.*?\$|\$\$.*?\$\$)', hint1)
+            self.hint1_label.clear()
+            hint_layout = QVBoxLayout()
+            for part in parts:
+                if re.match(r'^\$.*\$$', part) or re.match(r'^\$\$.*\$\$$', part):
+                    label = QLabel(self)
+                    label.setPixmap(latex_to_pixmap(part))
+                    label.setAlignment(Qt.AlignLeft)
+                    hint_layout.addWidget(label)
+                elif part.strip():
+                    label = QLabel(part, self)
+                    label.setFont(QFont("Arial", 12))
+                    label.setWordWrap(True)
+                    label.setAlignment(Qt.AlignLeft)
+                    hint_layout.addWidget(label)
+            # QWidgetにレイアウトを設定
+            hint_widget = QWidget()
+            hint_widget.setLayout(hint_layout)
+            # ヒントラベルの親レイアウトに追加
+            parent_layout = self.hint1_label.parentWidget().layout()
+            parent_layout.replaceWidget(self.hint1_label, hint_widget)
+            self.hint1_label.hide()
+        else:
+            self.hint1_label.setText("ヒント1: " + hint1)
+        self.hint1_btn.setEnabled(False)
+    def update_progress_label(self):
+        # 1始まりで表示
+        self.progress_label.setText(f"{self.question_count+1}/10")
     def __init__(self, df, mode="微分"):
         super().__init__()
         self.mode = mode
@@ -47,7 +82,6 @@ class DifferentialGame(QWidget):
         # カラム名の空白を除去
         df.columns = [col.strip() for col in df.columns]
         self.data = df.to_dict(orient="records")
-        # ID最大値取得
         self.max_id = max([int(row["ID"]) for row in self.data if str(row["ID"]).isdigit()])
         # ランダムなIDで出題
         import random
@@ -55,11 +89,20 @@ class DifferentialGame(QWidget):
         # self.currentが存在しないIDの場合は最初のIDに
         if not any(int(row["ID"]) == self.current for row in self.data):
             self.current = int(self.data[0]["ID"])
+        self.correct_count = 0  # 正解数カウント
+        self.question_count = 0 # 問題数カウント
         self.init_ui()
 
     def init_ui(self):
+        # 進捗ラベル（中央寄り上部）
+        self.progress_label = QLabel(self)
+        self.progress_label.setFont(QFont("Arial", 40, QFont.Bold))
+        self.progress_label.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
+        self.update_progress_label()
+
         # 問題欄（左半分の中心）
         left_layout = QVBoxLayout()
+        left_layout.addWidget(self.progress_label, alignment=Qt.AlignHCenter | Qt.AlignTop)
         left_layout.addStretch(1)
         # Question（テキスト）を上に表示
         question_text = self.data[self.current]["Question"]
@@ -119,59 +162,26 @@ class DifferentialGame(QWidget):
             self.answer_group.addButton(btn, i)
             self.answer_buttons.append(btn)
             answer_layout.addWidget(btn)
-            # ボタンが選択されたら即画面遷移
             btn.setCheckable(False)
-            # 正誤判定（Answerと完全一致ならTrue、そうでなければFalse）
-            btn.is_correct = (ans == self.data[self.current]["Answer"].strip())
-            btn.clicked.connect(lambda _, idx=i, b=btn: self.on_choice_selected(idx, b.is_correct))
 
-
-        # 右側レイアウト
+        # レイアウトの設定
         right_layout = QVBoxLayout()
-        right_layout.addWidget(self.hint1_btn, alignment=Qt.AlignTop)
-        right_layout.addWidget(self.hint1_label, alignment=Qt.AlignTop)
-        right_layout.addWidget(self.hint2_btn, alignment=Qt.AlignTop)
-        right_layout.addWidget(self.hint2_label, alignment=Qt.AlignTop)
-        right_layout.addStretch(2)
+        right_layout.addWidget(self.hint1_btn)
+        right_layout.addWidget(self.hint1_label)
+        right_layout.addWidget(self.hint2_btn)
+        right_layout.addWidget(self.hint2_label)
+        right_layout.addStretch(1)
         right_layout.addLayout(answer_layout)
 
-        # 全体レイアウト
         main_layout = QHBoxLayout()
-        main_layout.addLayout(left_layout, stretch=2)
-        main_layout.addLayout(right_layout, stretch=3)
+        main_layout.addLayout(left_layout, 2)
+        main_layout.addLayout(right_layout, 3)
         self.setLayout(main_layout)
-        self.showMaximized()
 
-    def show_hint1(self):
-        hint1 = self.data[self.current]["Hint1"]
-        # $...$ で囲まれた数式があれば画像表示
-        if "$" in hint1:
-            import re
-            parts = re.split(r'(\$.*?\$|\$\$.*?\$\$)', hint1)
-            self.hint1_label.clear()
-            hint_layout = QVBoxLayout()
-            for part in parts:
-                if re.match(r'^\$.*\$$', part) or re.match(r'^\$\$.*\$\$$', part):
-                    label = QLabel(self)
-                    label.setPixmap(latex_to_pixmap(part))
-                    label.setAlignment(Qt.AlignLeft)
-                    hint_layout.addWidget(label)
-                elif part.strip():
-                    label = QLabel(part, self)
-                    label.setFont(QFont("Arial", 12))
-                    label.setWordWrap(True)
-                    label.setAlignment(Qt.AlignLeft)
-                    hint_layout.addWidget(label)
-            # QWidgetにレイアウトを設定
-            hint_widget = QWidget()
-            hint_widget.setLayout(hint_layout)
-            # ヒントラベルの親レイアウトに追加
-            parent_layout = self.hint1_label.parentWidget().layout()
-            parent_layout.replaceWidget(self.hint1_label, hint_widget)
-            self.hint1_label.hide()
-        else:
-            self.hint1_label.setText("ヒント1: " + hint1)
-        self.hint1_btn.setEnabled(False)
+        # 選択肢ボタンのクリックイベント
+        for idx, btn in enumerate(self.answer_buttons):
+            btn.clicked.connect(lambda checked, i=idx: self.on_choice_selected(i, self.choices[i] == self.data[self.current]["Answer"].strip()))
+        self.showMaximized()
 
     def show_hint2(self):
         hint2 = self.data[self.current]["Hint2"]
@@ -201,11 +211,13 @@ class DifferentialGame(QWidget):
             self.hint2_label.setText("ヒント2: " + hint2)
         self.hint2_btn.setEnabled(False)
 
-    def on_choice_selected(self, idx, _):
+    def on_choice_selected(self, idx, is_correct):
         user_answer = self.choices[idx].strip()
         correct_answer = self.data[self.current]["Answer"].strip()
         explanation = self.data[self.current]["Explanation"]
-        is_correct = (user_answer == correct_answer)
+        if is_correct:
+            self.correct_count += 1
+        self.question_count += 1
         self.answer_window = AnswerWindow(
             correct_answer, explanation, self.current, len(self.data), self, is_correct
         )
@@ -213,22 +225,25 @@ class DifferentialGame(QWidget):
         self.hide()
 
     def show_next(self, next_index):
+        # 10問解いたら結果まとめ画面に遷移
+        if self.question_count >= 10:
+            self.result_window = SumResultWindow(self.correct_count, 10)
+            self.result_window.show()
+            self.close()
+            return
         if next_index < len(self.data):
             self.current = next_index
         else:
-            # 最後まで行ったらID0に戻る
             self.current = 0
-        # Question（テキスト）
+        self.update_progress_label()
         question_text = self.data[self.current]["Question"]
         self.question_text_label.setText(question_text)
         self.question_text_label.setFont(QFont("Arial", 18, QFont.Bold))
-        # formula（数式画像）
         formula_text = self.data[self.current]["formula"]
         if formula_text.startswith("$") and formula_text.endswith("$"):
             self.formula_label.setPixmap(latex_to_pixmap(formula_text))
         else:
             self.formula_label.setPixmap(latex_to_pixmap(f"${formula_text}$"))
-        # 選択肢を再度ランダムに配置（数式画像）
         self.choices = [
             self.data[self.current]["select1"].strip(),
             self.data[self.current]["select2"].strip(),
@@ -240,7 +255,6 @@ class DifferentialGame(QWidget):
             btn.setIcon(QIcon(pixmap))
             btn.setIconSize(pixmap.size())
             btn.setChecked(False)
-        # ヒント・回答欄リセット
         self.hint1_label.setText("")
         self.hint2_label.setText("")
         self.hint1_btn.setEnabled(True)
